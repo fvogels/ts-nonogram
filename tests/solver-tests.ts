@@ -89,10 +89,6 @@ describe(`sequencesSatisfyingConstraints`, function() {
         });
     });
 
-    it('runs within time limits', function () {
-        [...sequencesSatisfyingConstraints(40, [1, 1, 1, 1, 1])];
-    });
-
     function parse(s: string) : Square[]
     {
         return s.split('').map(c => c === '.' ? Square.Empty : Square.Filled);
