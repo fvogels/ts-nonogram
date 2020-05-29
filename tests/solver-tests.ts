@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import { sequencesSatisfyingConstraints, Square } from '@/solver';
 
 
-describe('sequencesSatisfyingConstraints', function() {
+describe(`sequencesSatisfyingConstraints`, function() {
     const inputs : { length: number, constraints : number[], expected : string[] }[] = [
         {
             length: 0,
@@ -87,6 +87,10 @@ describe('sequencesSatisfyingConstraints', function() {
             expect(actual.length).to.be.equal(expected.length);
             expect(actual).to.have.same.deep.members(expected);
         });
+    });
+
+    it('runs within time limits', function () {
+        [...sequencesSatisfyingConstraints(40, [1, 1, 1, 1, 1])];
     });
 
     function parse(s: string) : Square[]
