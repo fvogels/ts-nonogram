@@ -1,3 +1,6 @@
+import { times } from 'lodash';
+
+
 export enum Square
 {
     Empty,
@@ -6,34 +9,22 @@ export enum Square
 }
 
 
-function repeat<T>(value : T, n : number) : T[]
-{
-    const result = new Array<T>(n);
-
-    for ( let i = 0; i !== result.length; ++i )
-    {
-        result[i] = value;
-    }
-
-    return result;
-}
-
 export function* sequencesSatisfyingConstraints(length : number, constraints : readonly number[], needsSpace : boolean = false) : Iterable<Square[]>
 {
     if ( length >= 0 )
     {
         if ( constraints.length === 0 )
         {
-            yield repeat(Square.Empty, length);
+            yield times(length, _ => Square.Empty);
         }
         else
         {
             const [ c, ...cs ] = constraints;
-            const island = repeat(Square.Filled, c);
+            const island = times(c, _ => Square.Filled);
 
             for ( let nSpaces = needsSpace ? 1 : 0; nSpaces < length; ++nSpaces )
             {
-                const space = repeat(Square.Empty, nSpaces);
+                const space = times(nSpaces, _ => Square.Empty);
 
                 for ( const rest of sequencesSatisfyingConstraints(length - nSpaces - c, cs, true) )
                 {
@@ -43,3 +34,4 @@ export function* sequencesSatisfyingConstraints(length : number, constraints : r
         }
     }
 }
+
