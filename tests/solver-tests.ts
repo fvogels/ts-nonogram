@@ -1,10 +1,10 @@
 /* tslint:disable */
 
 import { expect } from 'chai';
-import { possibleCombinations, Square } from '@/solver';
+import { sequencesSatisfyingConstraints, Square } from '@/solver';
 
 
-describe('possibleCombinations', function() {
+describe('sequencesSatisfyingConstraints', function() {
     const inputs : { length: number, constraints : number[], expected : string[] }[] = [
         {
             length: 0,
@@ -82,7 +82,7 @@ describe('possibleCombinations', function() {
         const expected = expectedStrings.map(parse);
 
         it(`length ${length}, constraints [${constraints}]`, function() {
-            const actual = [...possibleCombinations(length, constraints)].map(xs => [...xs]);
+            const actual = [...sequencesSatisfyingConstraints(length, constraints)].map(xs => [...xs]);
 
             expect(actual.length).to.be.equal(expected.length);
             expect(actual).to.have.same.deep.members(expected);
