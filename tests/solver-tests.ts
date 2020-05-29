@@ -82,7 +82,7 @@ describe(`sequencesSatisfyingConstraints`, function() {
         const expected = expectedStrings.map(parse);
 
         it(`length ${length}, constraints [${constraints}]`, function() {
-            const actual = [...sequencesSatisfyingConstraints(length, constraints)];
+            const actual = [...sequencesSatisfyingConstraints(length, constraints)].map(xs => [...xs]);
 
             expect(actual.length).to.be.equal(expected.length);
             expect(actual).to.have.same.deep.members(expected);
