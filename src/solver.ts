@@ -1,6 +1,3 @@
-import { Repeat, Seq, Range } from 'immutable';
-
-
 export enum Square
 {
     Empty,
@@ -9,28 +6,38 @@ export enum Square
 }
 
 
-export function* sequencesSatisfyingConstraints(length : number, constraints : readonly number[], needsSpace : boolean = false) : Iterable<Seq.Indexed<Square>>
+function repeat<T>(value : T, n : number) : T[]
+{
+    const result = new Array<T>(n);
+
+    for ( let i = 0; i !== result.length; ++i )
+    {
+        result[i] = value;
+    }
+
+    return result;
+}
+
+export function* sequencesSatisfyingConstraints(length : number, constraints : readonly number[], needsSpace : boolean = false) : Iterable<Square[]>
 {
     if ( length >= 0 )
     {
         if ( constraints.length === 0 )
         {
-            yield Repeat(Square.Empty, length);
+            yield repeat(Square.Empty, length);
         }
         else
         {
             const [ c, ...cs ] = constraints;
-            const island = Repeat(Square.Filled, c);
+            const island = repeat(Square.Filled, c);
 
-            for ( const nSpaces of Range(needsSpace ? 1 : 0, length) )
+            for ( let nSpaces = needsSpace ? 1 : 0; nSpaces < length; ++nSpaces )
             {
-                const space = Repeat(Square.Empty, nSpaces);
+                const space = repeat(Square.Empty, nSpaces);
 
                 for ( const rest of sequencesSatisfyingConstraints(length - nSpaces - c, cs, true) )
                 {
-                    const concatenation : Seq.Indexed<Square> = space.concat<Square>(island, rest);
-
-                    yield concatenation;
+                    yield [ ...space, ...island, ...rest ];
                 }
             }
         }
