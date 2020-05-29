@@ -1,0 +1,35 @@
+{
+  "name": "@woumpousse/nonogram",
+  "version": "0.1.0",
+  "description": "Nonogram related functionality",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "npm run linter && mocha -r ts-node/register -r tsconfig-paths/register tests/**/*.ts",
+    "linter": "tslint -c tslint.json src/**/*.ts src/**/*.tsx",
+    "build": "npm run clean && tsc",
+    "prepare": "npm run build",
+    "clean": "rimraf dist"
+  },
+  "keywords": [],
+  "author": "Frederic Vogels",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chai": "^4.2.11",
+    "@types/immutable": "^3.8.7",
+    "@types/mocha": "^7.0.2",
+    "chai": "^4.2.0",
+    "mocha": "^7.1.1",
+    "rimraf": "^3.0.2",
+    "ts-node": "^8.8.2",
+    "tsconfig-paths": "^3.9.0",
+    "tslint": "^6.1.1",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "immutable": "^4.0.0-rc.12"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fvogels/ts-nonogram"
+  }
+}
