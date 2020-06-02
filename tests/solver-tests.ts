@@ -1,96 +1,393 @@
 /* tslint:disable */
 
 import { expect } from 'chai';
-import { sequencesSatisfyingConstraints, Square } from '@/solver';
+import { Square, compatibleSequences, endOfLine, space, spaces, block, blocks, refine } from '@/solver';
+import { List } from 'immutable';
 
 
-describe(`sequencesSatisfyingConstraints`, function() {
-    const inputs : { length: number, constraints : number[], expected : string[] }[] = [
+
+function parse(s: string) : List<Square>
+{
+    return List(s.split('').map(parseChar));
+
+
+    function parseChar(char : string) : Square
+    {
+        if ( char === '.' )
         {
-            length: 0,
+            return Square.Empty;
+        }
+        else if ( char === '?' )
+        {
+            return Square.Unknown;
+        }
+        else if ( char === '!' )
+        {
+            return Square.Impossible;
+        }
+        else
+        {
+            return Square.Filled;
+        }
+    }
+}
+
+
+describe('endOfLine', function () {
+    it('returns nothing when given nonempty sequence', function () {
+        const result = [...endOfLine(List(parse('.')))]
+
+        expect(result).to.be.empty;
+    });
+
+    it('returns empty list when given empty sequence', function () {
+        const result = [...endOfLine(List())]
+
+        expect(result).to.have.length(1);
+        expect(result[0].toArray()).to.eql([]);
+    });
+});
+
+describe('space', function () {
+    it('adds space on "."', function () {
+        const result = [...space( endOfLine )(parse('.'))];
+        const expected = parse('.');
+
+        expect(result).to.have.length(1);
+        expect(result[0].equals(expected)).to.be.true;
+    });
+
+    it('adds space on "?"', function () {
+        const result = [...space( endOfLine )(parse('?'))];
+        const expected = parse('.');
+
+        expect(result).to.have.length(1);
+        expect(result[0].equals(expected)).to.be.true;
+    });
+
+    it('fails on "x"', function () {
+        const result = [...space( endOfLine )(parse('x'))];
+
+        expect(result).to.be.empty;
+    });
+
+    it('space(space(eol)) adds two spaces on ..', function () {
+        const result = [...space(space(endOfLine))(parse('..'))];
+        const expected = parse('..');
+
+        expect(result).to.have.length(1);
+        expect(result[0].equals(expected)).to.be.true;
+    });
+
+    it('space(space(eol)) adds two spaces on ?.', function () {
+        const result = [...space(space(endOfLine))(parse('?.'))];
+        const expected = parse('..');
+
+        expect(result).to.have.length(1);
+        expect(result[0].equals(expected)).to.be.true;
+    });
+
+    it('space(space(eol)) fails on .x', function () {
+        const result = [...space(space(endOfLine))(parse('.x'))];
+        const expected = parse('..');
+
+        expect(result).to.be.empty;
+    });
+});
+
+describe('spaces', function () {
+    it('works on .', function () {
+        const result = [...spaces(0, endOfLine)(parse('.'))];
+        const expected = parse('.');
+
+        expect(result).to.have.length(1);
+        expect(result[0].equals(expected)).to.be.true;
+    });
+
+    it('works on ..', function () {
+        const result = [...spaces(0, endOfLine)(parse('..'))];
+        const expected = parse('..');
+
+        expect(result).to.have.length(1);
+        expect(result[0].equals(expected)).to.be.true;
+    });
+
+    it('works on ?', function () {
+        const result = [...spaces(0, endOfLine)(parse('?'))];
+        const expected = parse('.');
+
+        expect(result).to.have.length(1);
+        expect(result[0].equals(expected)).to.be.true;
+    });
+
+    it('works on .?.', function () {
+        const result = [...spaces(0, endOfLine)(parse('.?.'))];
+        const expected = parse('...');
+
+        expect(result).to.have.length(1);
+        expect(result[0].equals(expected)).to.be.true;
+    });
+
+    it('fails on .x.', function () {
+        const result = [...spaces(0, endOfLine)(parse('.x.'))];
+
+        expect(result).to.be.empty;
+    });
+});
+
+describe('block', function () {
+    it('adds block on "x"', function () {
+        const result = [...block( endOfLine )(parse('x'))];
+        const expected = parse('x');
+
+        expect(result).to.have.length(1);
+        expect(result[0].equals(expected)).to.be.true;
+    });
+
+    it('adds block on "?"', function () {
+        const result = [...block( endOfLine )(parse('?'))];
+        const expected = parse('x');
+
+        expect(result).to.have.length(1);
+        expect(result[0].equals(expected)).to.be.true;
+    });
+
+    it('fails on "x"', function () {
+        const result = [...block( endOfLine )(parse('.'))];
+
+        expect(result).to.be.empty;
+    });
+});
+
+describe('blocks', function () {
+    it('length 1, compatible with x', function () {
+        const result = [...blocks(1, endOfLine)(parse('x'))];
+        const expected = parse('x');
+
+        expect(result).to.have.length(1);
+        expect(result[0].equals(expected)).to.be.true;
+    });
+
+    it('length 1, compatible with ?', function () {
+        const result = [...blocks(1, endOfLine)(parse('?'))];
+        const expected = parse('x');
+
+        expect(result).to.have.length(1);
+        expect(result[0].equals(expected)).to.be.true;
+    });
+
+    it('length 2, compatible with xx', function () {
+        const result = [...blocks(2, endOfLine)(parse('xx'))];
+        const expected = parse('xx');
+
+        expect(result).to.have.length(1);
+        expect(result[0].equals(expected)).to.be.true;
+    });
+
+    it('length 2, compatible with ??', function () {
+        const result = [...blocks(2, endOfLine)(parse('??'))];
+        const expected = parse('xx');
+
+        expect(result).to.have.length(1);
+        expect(result[0].equals(expected)).to.be.true;
+    });
+
+    it('fails: length 2, compatible with ..', function () {
+        const result = [...blocks(1, endOfLine)(parse('..'))];
+
+        expect(result).to.be.empty;
+    });
+});
+
+describe('compatibleSequences', function () {
+    const inputs : { constraints : number[], compatibleWith : string, expected : string[] }[] = [
+        {
             constraints: [],
-            expected: [ "" ]
+            compatibleWith: '?',
+            expected: [
+                '.'
+            ]
         },
         {
-            length: 1,
             constraints: [],
-            expected: [ "." ]
+            compatibleWith: '.',
+            expected: [
+                '.'
+            ]
         },
         {
-            length: 2,
             constraints: [],
-            expected: [ ".." ]
+            compatibleWith: '..',
+            expected: [
+                '..'
+            ]
         },
         {
-            length: 1,
+            constraints: [],
+            compatibleWith: '???',
+            expected: [
+                '...'
+            ]
+        },
+        {
             constraints: [1],
-            expected: [ "x" ]
+            compatibleWith: '?',
+            expected: [
+                'x'
+            ]
         },
         {
-            length: 2,
             constraints: [1],
-            expected: [ "x.", ".x" ]
+            compatibleWith: 'x',
+            expected: [
+                'x'
+            ]
         },
         {
-            length: 3,
             constraints: [1],
-            expected: [ "..x", ".x.", "x.." ]
+            compatibleWith: '.',
+            expected: [
+            ]
         },
         {
-            length: 2,
+            constraints: [1],
+            compatibleWith: '??',
+            expected: [
+                'x.',
+                '.x'
+            ]
+        },
+        {
             constraints: [2],
-            expected: [ "xx" ]
+            compatibleWith: '??',
+            expected: [
+                'xx',
+            ]
         },
         {
-            length: 3,
             constraints: [1, 1],
-            expected: [ "x.x" ]
+            compatibleWith: '??',
+            expected: [
+            ]
         },
         {
-            length: 2,
-            constraints: [3],
-            expected: [ ]
-        },
-        {
-            length: 3,
-            constraints: [2],
-            expected: [ "xx.", ".xx" ]
-        },
-        {
-            length: 4,
             constraints: [1, 1],
-            expected: [ "x..x", "x.x.", ".x.x" ]
+            compatibleWith: '???',
+            expected: [
+                'x.x'
+            ]
         },
         {
-            length: 4,
-            constraints: [1, 2],
-            expected: [ "x.xx" ]
+            constraints: [1, 1],
+            compatibleWith: '????',
+            expected: [
+                'x.x.',
+                'x..x',
+                '.x.x',
+            ]
         },
         {
-            length: 5,
-            constraints: [1, 2],
-            expected: [ "x.xx.", "x..xx", ".x.xx" ]
+            constraints: [1, 1, 1],
+            compatibleWith: '????',
+            expected: [
+            ]
         },
         {
-            length: 4,
-            constraints: [4],
-            expected: [ "xxxx" ]
+            constraints: [1, 1, 1],
+            compatibleWith: '?????',
+            expected: [
+                'x.x.x'
+            ]
         },
     ];
 
-    inputs.forEach(function ({length, constraints, expected: expectedStrings}) {
-        const expected = expectedStrings.map(parse);
+    inputs.forEach( ({ constraints, compatibleWith, expected: expectedStrings }) => {
+        it(`Constraints [${constraints}], compatibleWith ${compatibleWith}`, function () {
+            const seq = parse(compatibleWith);
+            const expected = expectedStrings.map(x => parse(x).toArray());
+            const actual = [...compatibleSequences(seq, constraints)].map(x => [...x]);
 
-        it(`length ${length}, constraints [${constraints}]`, function() {
-            const actual = [...sequencesSatisfyingConstraints(length, constraints)].map(xs => [...xs]);
-
-            expect(actual.length).to.be.equal(expected.length);
             expect(actual).to.have.same.deep.members(expected);
         });
-    });
+    } );
+});
 
-    function parse(s: string) : Square[]
-    {
-        return s.split('').map(c => c === '.' ? Square.Empty : Square.Filled);
-    }
+describe('refine', function () {
+    const data : { sequence: string, constraints: readonly number[], expected: string }[] = [
+        {
+            sequence: '?',
+            constraints: [],
+            expected: '.'
+        },
+        {
+            sequence: '?',
+            constraints: [1],
+            expected: 'x'
+        },
+        {
+            sequence: '.',
+            constraints: [],
+            expected: '.'
+        },
+        {
+            sequence: 'x',
+            constraints: [],
+            expected: '!'
+        },
+        {
+            sequence: '??',
+            constraints: [1],
+            expected: '??'
+        },
+        {
+            sequence: '?.',
+            constraints: [1],
+            expected: 'x.'
+        },
+        {
+            sequence: '???',
+            constraints: [1],
+            expected: '???'
+        },
+        {
+            sequence: '???',
+            constraints: [1,1],
+            expected: 'x.x'
+        },
+        {
+            sequence: '?x?',
+            constraints: [1],
+            expected: '.x.'
+        },
+        {
+            sequence: '..?',
+            constraints: [1],
+            expected: '..x'
+        },
+        {
+            sequence: '????',
+            constraints: [3],
+            expected: '?xx?'
+        },
+        {
+            sequence: '??????????',
+            constraints: [8],
+            expected: '??xxxxxx??'
+        },
+        {
+            sequence: '??????????',
+            constraints: [4,4],
+            expected: '?xxx??xxx?'
+        },
+    ];
+
+    data.forEach(({sequence: sequenceString, constraints, expected: expectedString}) => {
+        it(`${sequenceString} with constraints [${constraints}]`, function () {
+            const sequence = parse(sequenceString);
+            const expected = parse(expectedString);
+            const actual = refine(sequence, constraints);
+
+            expect([...actual]).to.be.eql([...expected]);
+        });
+    });
 });
